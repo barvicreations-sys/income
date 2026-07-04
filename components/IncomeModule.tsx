@@ -1,33 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, Download, TrendingUp } from 'lucide-react';
-import { cn, formatCurrency, formatDate } from '../lib/utils';
-import { motion } from 'motion/react';
+import { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, serverTimestamp, orderBy, limit } from 'firebase/firestore';
+import { TrendingUp, Plus, Search, Loader2, Save, X, Calendar, DollarSign, User } from 'lucide-react';
+import { translations } from '../lib/translations';
+import { motion, AnimatePresence } from 'motion/react';
+import { formatCurrency, formatDate } from '../lib/utils';
+import { IncomeRecord } from '../lib/types';
 
-interface IncomeRecord {
-  id: string;
-  amount: number;
-  category: string;
-  date: string;
-  paymentMethod: string;
-  receivedFrom: string;
-  remarks: string;
-}
-
-export default function IncomeModule() {
-  const [records, setRecords] = useState<IncomeRecord[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+export default function IncomeModule({ user }: { user: any }) {
+  const lang = user?.language || 'en';
+  const t = translations[lang as keyof typeof translations];
   const [loading, setLoading] = useState(true);
-
+  const [records, setRecords] = useState<IncomeRecord[]>([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
-    amount: 0,
-    category: 'Sales',
+    amount: '',
+    category: 'Fee',
     date: new Date().toISOString().split('T')[0],
-    paymentMethod: 'Cash',
     receivedFrom: '',
     remarks: ''
   });
@@ -35,40 +27,46 @@ export default function IncomeModule() {
   const fetchRecords = async () => {
     setLoading(true);
     try {
-      const q = query(collection(db, 'income'), orderBy('date', 'desc'));
+      const q = query(collection(db, 'income'), orderBy('date', 'desc'), limit(50));
       const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IncomeRecord));
-      setRecords(data);
-    } catch (error) {
-      console.error("Error fetching income:", error);
+      setRecords(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IncomeRecord)));
+    } catch (err) {
+      console.error("Error fetching income:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRecords();
+    const timer = setTimeout(() => {
+      fetchRecords();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await addDoc(collection(db, 'income'), {
         ...formData,
-        createdAt: new Date().toISOString()
+        amount: parseFloat(formData.amount),
+        updatedBy: user.uid,
+        updatedAt: serverTimestamp()
       });
-      setIsModalOpen(false);
+      setShowAdd(false);
       setFormData({
-        amount: 0,
-        category: 'Sales',
+        amount: '',
+        category: 'Fee',
         date: new Date().toISOString().split('T')[0],
-        paymentMethod: 'Cash',
         receivedFrom: '',
         remarks: ''
       });
       fetchRecords();
-    } catch (error) {
-      console.error("Error adding income:", error);
+    } catch (err) {
+      console.error("Error saving income:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,113 +76,185 @@ export default function IncomeModule() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 max-w-6xl mx-auto">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Income Management</h2>
-          <p className="text-slate-500">Log and track all incoming revenue.</p>
+          <h1 className="text-3xl font-bold font-display text-white">{t.income}</h1>
+          <p className="text-slate-400 text-sm mt-1">Track all revenue and incoming payments</p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-emerald-500 text-white px-4 py-2 rounded-xl flex items-center hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
+        <button
+          onClick={() => setShowAdd(true)}
+          className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-2xl flex items-center gap-2 transition-all shadow-xl shadow-emerald-600/20"
         >
-          <Plus className="w-5 h-5 mr-2" />
-          Add Income
+          <Plus size={20} />
+          {t.add} Entry
         </button>
-      </div>
+      </header>
 
-      <div className="flex gap-4">
-        <div className="flex-1 relative">
-          <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Search income records..."
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 outline-none"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden backdrop-blur-xl">
+        <div className="p-6 border-b border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <input
+              type="text"
+              placeholder={t.search}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-white focus:outline-none focus:border-blue-500 transition-colors"
+            />
+          </div>
+          <div className="flex items-center gap-2 text-emerald-400 font-bold bg-emerald-400/10 px-4 py-2 rounded-xl border border-emerald-400/20">
+            <TrendingUp size={18} />
+            Total: {formatCurrency(records.reduce((acc, r) => acc + r.amount, 0))}
+          </div>
         </div>
-      </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Received From</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Category</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Amount</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Method</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Date</th>
-                <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase text-right">Actions</th>
+              <tr className="bg-slate-950/50 text-slate-500 text-xs uppercase tracking-wider font-bold">
+                <th className="px-6 py-4">{t.date}</th>
+                <th className="px-6 py-4">Received From</th>
+                <th className="px-6 py-4">{t.category}</th>
+                <th className="px-6 py-4">{t.amount}</th>
+                <th className="px-6 py-4">{t.remarks}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-400">Loading...</td></tr>
-              ) : filteredRecords.map((record) => (
-                <tr key={record.id} className="hover:bg-slate-50/50 group">
-                  <td className="px-6 py-4 font-medium text-slate-900">{record.receivedFrom}</td>
+            <tbody className="divide-y divide-slate-800">
+              {filteredRecords.map((record) => (
+                <tr key={record.id} className="hover:bg-slate-800/30 transition-colors group">
+                  <td className="px-6 py-4 text-sm text-slate-300 font-mono">{formatDate(record.date)}</td>
                   <td className="px-6 py-4">
-                    <span className="px-2 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-lg uppercase">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20">
+                        <User size={16} />
+                      </div>
+                      <span className="text-sm font-semibold text-white">{record.receivedFrom}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[10px] font-bold uppercase tracking-wider border border-slate-700">
                       {record.category}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-bold text-emerald-600">{formatCurrency(record.amount)}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{record.paymentMethod}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{formatDate(record.date)}</td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+                  <td className="px-6 py-4 font-bold text-emerald-400">{formatCurrency(record.amount)}</td>
+                  <td className="px-6 py-4 text-xs text-slate-500 max-w-xs truncate">{record.remarks}</td>
                 </tr>
               ))}
+              {filteredRecords.length === 0 && !loading && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">No records found</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white w-full max-w-lg rounded-2xl shadow-2xl">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <h3 className="text-xl font-bold">Add Income</h3>
-              <button onClick={() => setIsModalOpen(false)}>×</button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Received From</label>
-                  <input required type="text" className="w-full px-4 py-2 border rounded-xl" value={formData.receivedFrom} onChange={e => setFormData({...formData, receivedFrom: e.target.value})} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Amount</label>
-                  <input required type="number" className="w-full px-4 py-2 border rounded-xl" value={formData.amount} onChange={e => setFormData({...formData, amount: Number(e.target.value)})} />
-                </div>
+      <AnimatePresence>
+        {showAdd && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAdd(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-white font-display">New Income Entry</h2>
+                <button onClick={() => setShowAdd(false)} className="text-slate-500 hover:text-white transition-colors">
+                  <X size={24} />
+                </button>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Category</label>
-                  <select className="w-full px-4 py-2 border rounded-xl" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                    <option>Sales</option>
-                    <option>Services</option>
-                    <option>Investments</option>
-                    <option>Other</option>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Date</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                      <input
+                        type="date"
+                        required
+                        value={formData.date}
+                        onChange={(e) => setFormData({...formData, date: e.target.value})}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Amount</label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500" size={18} />
+                      <input
+                        type="number"
+                        required
+                        placeholder="0.00"
+                        value={formData.amount}
+                        onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Received From</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Student Name or Source"
+                    value={formData.receivedFrom}
+                    onChange={(e) => setFormData({...formData, receivedFrom: e.target.value})}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Category</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
+                  >
+                    <option value="Fee">School Fee</option>
+                    <option value="Donation">Donation</option>
+                    <option value="Misc">Miscellaneous</option>
+                    <option value="Zakat">Zakat</option>
                   </select>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Date</label>
-                  <input required type="date" className="w-full px-4 py-2 border rounded-xl" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Remarks</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Additional details..."
+                    value={formData.remarks}
+                    onChange={(e) => setFormData({...formData, remarks: e.target.value})}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                  />
                 </div>
-              </div>
-              <button type="submit" className="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20">Save Record</button>
-            </form>
-          </motion.div>
-        </div>
-      )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-emerald-600/20"
+                >
+                  {loading ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} />}
+                  Save Income Record
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

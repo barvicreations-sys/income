@@ -1,99 +1,79 @@
 {
-  "entities": {
-    "users": {
-      "title": "User",
-      "description": "User account and role information",
-      "type": "object",
-      "properties": {
-        "uid": { "type": "string" },
-        "email": { "type": "string" },
-        "name": { "type": "string" },
-        "role": { "type": "string", "enum": ["admin", "staff", "user"] },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["uid", "email", "role"]
+  "collections": [
+    {
+      "name": "users",
+      "fields": [
+        { "name": "name", "type": "string" },
+        { "name": "email", "type": "string" },
+        { "name": "role", "type": "string" },
+        { "name": "language", "type": "string" },
+        { "name": "createdAt", "type": "timestamp" }
+      ]
     },
-    "salaries": {
-      "title": "Salary",
-      "description": "Employee salary payments",
-      "type": "object",
-      "properties": {
-        "employeeId": { "type": "string" },
-        "employeeName": { "type": "string" },
-        "monthlySalary": { "type": "number" },
-        "paidAmount": { "type": "number" },
-        "remainingSalary": { "type": "number" },
-        "paymentDate": { "type": "string", "format": "date" },
-        "paymentMethod": { "type": "string" },
-        "remarks": { "type": "string" },
-        "month": { "type": "string" },
-        "year": { "type": "number" }
-      },
-      "required": ["employeeId", "employeeName", "monthlySalary", "paidAmount"]
+    {
+      "name": "attendance",
+      "fields": [
+        { "name": "studentId", "type": "string" },
+        { "name": "date", "type": "string" },
+        { "name": "status", "type": "string" }
+      ]
     },
-    "income": {
-      "title": "Income",
-      "description": "Business income records",
-      "type": "object",
-      "properties": {
-        "amount": { "type": "number" },
-        "category": { "type": "string" },
-        "date": { "type": "string", "format": "date" },
-        "paymentMethod": { "type": "string" },
-        "receivedFrom": { "type": "string" },
-        "remarks": { "type": "string" }
-      },
-      "required": ["amount", "category", "date"]
+    {
+      "name": "quranLessons",
+      "fields": [
+        { "name": "studentId", "type": "string" },
+        { "name": "sabq", "type": "string" },
+        { "name": "sabqi", "type": "string" },
+        { "name": "manzil", "type": "string" },
+        { "name": "updatedAt", "type": "timestamp" }
+      ]
     },
-    "expenses": {
-      "title": "Expense",
-      "description": "Business expense records",
-      "type": "object",
-      "properties": {
-        "amount": { "type": "number" },
-        "category": { "type": "string" },
-        "date": { "type": "string", "format": "date" },
-        "paymentMethod": { "type": "string" },
-        "paidTo": { "type": "string" },
-        "remarks": { "type": "string" }
-      },
-      "required": ["amount", "category", "date"]
+    {
+      "name": "namaz",
+      "fields": [
+        { "name": "studentId", "type": "string" },
+        { "name": "date", "type": "string" },
+        { "name": "fajr", "type": "boolean" },
+        { "name": "zuhr", "type": "boolean" },
+        { "name": "asr", "type": "boolean" },
+        { "name": "maghrib", "type": "boolean" },
+        { "name": "isha", "type": "boolean" }
+      ]
     },
-    "ohdar": {
-      "title": "Ohdar (Receivable)",
-      "description": "Receivable payments from clients",
-      "type": "object",
-      "properties": {
-        "clientName": { "type": "string" },
-        "totalAmount": { "type": "number" },
-        "receivedAmount": { "type": "number" },
-        "pendingAmount": { "type": "number" },
-        "lastPaymentDate": { "type": "string", "format": "date" },
-        "remarks": { "type": "string" }
-      },
-      "required": ["clientName", "totalAmount"]
+    {
+      "name": "income",
+      "fields": [
+        { "name": "amount", "type": "number" },
+        { "name": "category", "type": "string" },
+        { "name": "date", "type": "string" },
+        { "name": "receivedFrom", "type": "string" }
+      ]
+    },
+    {
+      "name": "expenses",
+      "fields": [
+        { "name": "amount", "type": "number" },
+        { "name": "category", "type": "string" },
+        { "name": "date", "type": "string" },
+        { "name": "paidTo", "type": "string" }
+      ]
+    },
+    {
+      "name": "salaries",
+      "fields": [
+        { "name": "employeeId", "type": "string" },
+        { "name": "paidAmount", "type": "number" },
+        { "name": "paymentDate", "type": "string" }
+      ]
+    },
+    {
+      "name": "ohdar",
+      "fields": [
+        { "name": "clientName", "type": "string" },
+        { "name": "totalAmount", "type": "number" },
+        { "name": "receivedAmount", "type": "number" },
+        { "name": "pendingAmount", "type": "number" }
+      ]
     }
-  },
-  "firestore": {
-    "/users/{userId}": {
-      "schema": "users",
-      "description": "User profiles"
-    },
-    "/salaries/{salaryId}": {
-      "schema": "salaries",
-      "description": "Salary records"
-    },
-    "/income/{incomeId}": {
-      "schema": "income",
-      "description": "Income records"
-    },
-    "/expenses/{expenseId}": {
-      "schema": "expenses",
-      "description": "Expense records"
-    },
-    "/ohdar/{ohdarId}": {
-      "schema": "ohdar",
-      "description": "Receivable records"
-    }
-  }
+  ]
 }

@@ -1,7 +1,6 @@
 {
   "name": "Barvi Graphic Accounting",
-  "description": "Professional Business Accounting & Salary Management Software for Barvi Graphic Faisalabad",
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "description": "A sophisticated accounting dashboard with graphic visualizations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

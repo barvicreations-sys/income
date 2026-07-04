@@ -1,10 +1,9 @@
 {
-  "projectId": "inspirational-lamp-5rtgb",
-  "appId": "1:867338968817:web:17c30d53395b2346d29350",
-  "apiKey": "AIzaSyAFOqzK84wADD6IIAtrr9YzJRkfDcOhbPY",
-  "authDomain": "inspirational-lamp-5rtgb.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-barviaccounting-15fa1739-e997-44d8-a9b1-3a8a076f5b96",
-  "storageBucket": "inspirational-lamp-5rtgb.firebasestorage.app",
-  "messagingSenderId": "867338968817",
-  "measurementId": ""
+  "apiKey": "AIzaSyATkdficGEqnRqt4y8OQy855D3JMaN5Wi4",
+  "authDomain": "income-af42d.firebaseapp.com",
+  "projectId": "income-af42d",
+  "storageBucket": "income-af42d.firebasestorage.app",
+  "messagingSenderId": "958590891184",
+  "appId": "1:958590891184:web:cce5b9a574b0fd60efb775",
+  "measurementId": "G-SYW9L38L2L"
 }

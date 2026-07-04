@@ -1,137 +1,175 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  Settings as SettingsIcon, 
   User, 
   Shield, 
   Database, 
-  CloudBackuply, 
+  Cloud, 
   History,
   Save,
-  CheckCircle2,
-  AlertTriangle
+  CheckCircle,
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
-import { useAuth } from './AuthContext';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { AuditLog } from '@/lib/types';
-import { formatCurrency } from '@/lib/data-utils';
+import { db } from '../lib/firebase';
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { motion } from 'motion/react';
+import { cn } from '../lib/utils';
 
-export default function Settings() {
-  const { user } = useAuth();
-  const [logs, setLogs] = useState<AuditLog[]>([]);
+export default function Settings({ user }: { user?: any }) {
+  const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLogs = async () => {
-      const q = query(collection(db, 'audit_logs'), orderBy('timestamp', 'desc'), limit(10));
-      const snapshot = await getDocs(q);
-      const logData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditLog));
-      setLogs(logData);
-      setLoading(false);
+      try {
+        const q = query(collection(db, 'audit_logs'), orderBy('timestamp', 'desc'), limit(10));
+        const snapshot = await getDocs(q);
+        const logData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setLogs(logData);
+      } catch (error) {
+        console.error("Error fetching logs:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchLogs();
+    
+    const timer = setTimeout(() => {
+      fetchLogs();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900 tracking-tight font-display">System Settings</h2>
-        <p className="text-slate-500 text-sm">Configure your accounting preferences and view audit logs</p>
-      </div>
+    <div className="space-y-8 max-w-6xl mx-auto">
+      <header>
+        <h1 className="text-3xl font-bold font-display text-white">System Settings</h1>
+        <p className="text-slate-400 text-sm mt-1">Manage your account, system logs and security</p>
+      </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Profile Card */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm text-center">
-            <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-xl">
-              <User size={48} className="text-blue-500" />
+        <div className="lg:col-span-2 space-y-8">
+          {/* Profile Section */}
+          <section className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 backdrop-blur-xl">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+                <User size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-white font-display">User Profile</h3>
             </div>
-            <h3 className="text-xl font-bold text-slate-900">{user?.displayName}</h3>
-            <p className="text-sm text-slate-500 font-medium">{user?.email}</p>
-            <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white text-[10px] font-bold rounded-full uppercase tracking-widest shadow-lg shadow-blue-600/20">
-              <Shield size={12} />
-              {user?.role} Access
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
+                <input
+                  type="text"
+                  defaultValue={user?.name || "Administrator"}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+                <input
+                  type="email"
+                  disabled
+                  defaultValue={user?.email || "admin@barvi.edu"}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-slate-500 focus:outline-none"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Preferred Language</label>
+                <select className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none">
+                  <option value="en">English (US)</option>
+                  <option value="ur">Urdu (اردو)</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Role</label>
+                <div className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-3 px-4 text-slate-300 flex items-center gap-2">
+                  <Shield size={16} className="text-blue-500" />
+                  <span className="text-sm font-bold uppercase tracking-wider">{user?.role || "Super Admin"}</span>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div className="bg-slate-900 p-8 rounded-3xl text-white shadow-xl shadow-slate-900/20">
-            <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-              <Database size={16} /> Cloud Database
-            </h4>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Status</span>
-                <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 size={12} /> Connected
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Auto-Backup</span>
-                <span className="text-xs font-bold text-slate-300">Enabled</span>
-              </div>
-              <button className="w-full mt-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-700">
-                Restore from Backup
+            <div className="mt-8">
+              <button className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-2xl transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2">
+                <Save size={18} />
+                Save Changes
               </button>
             </div>
-          </div>
-        </div>
+          </section>
 
-        {/* Audit Logs */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-50">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <History size={20} className="text-indigo-500" /> Recent Edit History
-              </h3>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Last 10 Actions</span>
-            </div>
-
-            <div className="space-y-4">
-              {loading ? (
-                <div className="py-20 text-center text-slate-400 animate-pulse">Loading history...</div>
-              ) : logs.length === 0 ? (
-                <div className="py-20 text-center text-slate-400">No edits recorded yet.</div>
-              ) : (
-                logs.map((log) => (
-                  <div key={log.id} className="flex gap-4 p-4 hover:bg-slate-50 rounded-2xl transition-colors border border-transparent hover:border-slate-100">
-                    <div className="shrink-0 w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
-                      <Save size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-600">
-                        <span className="font-bold text-slate-900">{log.userName}</span> 
-                        {' '}{log.action === 'update' ? 'updated' : 'modified'} a record in 
-                        {' '}<span className="font-bold text-indigo-600 capitalize">{log.collection}</span>
-                      </p>
-                      <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                        {log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : 'Just now'}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-[10px] font-bold px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full uppercase tracking-tighter">
-                        {log.action}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="bg-amber-50 border border-amber-100 p-6 rounded-3xl flex gap-4">
-            <div className="shrink-0 w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center">
-              <AlertTriangle size={24} />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-amber-900 uppercase tracking-tight">Security Reminder</h4>
-              <p className="text-xs text-amber-700 leading-relaxed mt-1">
-                You are currently in the Master Admin role. Every action you take is being logged for security purposes. 
-                Always log out after completing your accounting session.
+          {/* Security & System */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-3xl p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <Database className="text-emerald-500" size={20} />
+                <h4 className="font-bold text-white text-sm font-display">Database Sync</h4>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Status</span>
+                <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                  <CheckCircle size={14} /> Connected
+                </span>
+              </div>
+              <p className="text-slate-400 text-xs mt-4 leading-relaxed">
+                Database is currently synchronized with Firebase Cloud Firestore. Real-time updates are enabled.
               </p>
             </div>
-          </div>
+            <div className="bg-blue-500/5 border border-blue-500/10 rounded-3xl p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <Cloud className="text-blue-500" size={20} />
+                <h4 className="font-bold text-white text-sm font-display">Cloud Infrastructure</h4>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Uptime</span>
+                <span className="text-xs font-bold text-blue-400">99.9%</span>
+              </div>
+              <p className="text-slate-400 text-xs mt-4 leading-relaxed">
+                System is running on high-availability cloud nodes with automated failover and zero-downtime deployments.
+              </p>
+            </div>
+          </section>
+        </div>
+
+        {/* Audit Logs Sidebar */}
+        <div className="lg:col-span-1">
+          <section className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 backdrop-blur-xl h-full">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-amber-600/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+                <History size={20} />
+              </div>
+              <h3 className="text-lg font-bold text-white font-display">Recent Activity</h3>
+            </div>
+
+            <div className="space-y-6">
+              {loading ? (
+                <div className="flex justify-center p-8">
+                  <Loader2 className="animate-spin text-slate-700" size={24} />
+                </div>
+              ) : logs.length > 0 ? (
+                logs.map((log, i) => (
+                  <div key={i} className="relative pl-6 pb-6 border-l border-slate-800 last:pb-0">
+                    <div className="absolute left-0 top-0 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50" />
+                    <p className="text-xs font-bold text-white mb-1 uppercase tracking-wider">{log.action}</p>
+                    <p className="text-[10px] text-slate-500 mb-2 leading-relaxed">{log.details}</p>
+                    <p className="text-[10px] text-slate-700 font-mono">2 mins ago</p>
+                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <AlertTriangle className="text-slate-800 mb-4" size={32} />
+                  <p className="text-slate-600 text-xs font-bold uppercase tracking-widest">No Recent Logs</p>
+                </div>
+              )}
+            </div>
+
+            <button className="w-full mt-8 py-3 rounded-xl border border-slate-800 text-slate-500 text-xs font-bold uppercase tracking-widest hover:bg-slate-800 hover:text-white transition-all">
+              View Full Audit Trail
+            </button>
+          </section>
         </div>
       </div>
     </div>

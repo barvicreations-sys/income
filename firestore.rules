@@ -1,57 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Global catch-all deny
     match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-    
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-    
-    function isAdmin() {
-      return isSignedIn() && getUserData().role == 'admin';
-    }
-    
-    function isStaff() {
-      return isSignedIn() && (getUserData().role == 'staff' || getUserData().role == 'admin');
-    }
-
-    // Users collection
-    match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow write: if isAdmin();
-    }
-
-    // Salaries collection
-    match /salaries/{salaryId} {
-      allow read: if isStaff();
-      allow write: if isAdmin();
-    }
-
-    // Income collection
-    match /income/{incomeId} {
-      allow read: if isStaff();
-      allow write: if isStaff();
-    }
-
-    // Expenses collection
-    match /expenses/{expenseId} {
-      allow read: if isStaff();
-      allow write: if isStaff();
-    }
-
-    // Ohdar collection
-    match /ohdar/{ohdarId} {
-      allow read: if isStaff();
-      allow write: if isStaff();
+      allow read, write: if request.auth != null;
     }
   }
 }

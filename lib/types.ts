@@ -1,77 +1,98 @@
-export type UserRole = 'admin' | 'staff' | 'user';
+export type UserRole = 'admin' | 'teacher' | 'accountant';
 
-export interface User {
+export interface UserProfile {
   uid: string;
   email: string;
+  name: string;
   role: UserRole;
-  displayName: string;
+  language: 'en' | 'ur';
 }
 
-export interface Salary {
-  id?: string;
-  employeeId: string;
+export interface Student {
+  id: string;
+  name: string;
+  fatherName: string;
+  class: string;
+  contact: string;
+  admissionDate: string;
+  status: 'active' | 'inactive';
+}
+
+export interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  date: string;
+  status: 'present' | 'absent' | 'leave';
+}
+
+export interface QuranRecord {
+  id: string;
+  studentId: string;
+  date: string;
+  para: number;
+  surah: string;
+  verse: string;
+  performance: 'excellent' | 'good' | 'average' | 'poor';
+}
+
+export interface NamazRecord {
+  id: string;
+  studentId: string;
+  date: string;
+  fajr: boolean;
+  zuhr: boolean;
+  asr: boolean;
+  maghrib: boolean;
+  isha: boolean;
+}
+
+export interface IncomeRecord {
+  id: string;
+  date: string;
+  amount: number;
+  category: string;
+  receivedFrom: string;
+  remarks: string;
+}
+
+export interface ExpenseRecord {
+  id: string;
+  date: string;
+  amount: number;
+  category: string;
+  paidTo: string;
+  remarks: string;
+}
+
+export interface SalaryRecord {
+  id: string;
   employeeName: string;
-  monthlySalary: number;
+  designation: string;
+  month: string;
+  amount: number;
   paidAmount: number;
-  remainingSalary: number;
-  paymentDate: any;
+  paymentDate: string;
   paymentMethod: string;
   remarks: string;
-  month: string;
-  createdAt?: any;
-  updatedAt?: any;
 }
 
-export interface Income {
-  id?: string;
-  date: any;
+export interface OhdarRecord {
+  id: string;
   customerName: string;
-  category: 'Design' | 'Video' | 'Printing' | 'Flex' | 'Visiting Card' | 'Logo' | 'Website' | 'Other';
-  description: string;
-  amount: number;
-  receivedAmount: number;
-  remainingAmount: number;
-  paymentStatus: string;
-  paymentMethod: string;
-  createdAt?: any;
-  updatedAt?: any;
-}
-
-export interface Expense {
-  id?: string;
-  date: any;
-  expenseName: string;
-  category: 'Electricity' | 'Gas' | 'Petrol' | 'School' | 'Tuition' | 'Hair' | 'Donation' | 'Rent' | 'Office Expense' | 'Other';
-  description: string;
-  amount: number;
-  paymentMethod: string;
-  createdAt?: any;
-  updatedAt?: any;
-}
-
-export interface Ohdar {
-  id?: string;
-  name: string;
+  workDescription: string;
   totalAmount: number;
-  receivedAmount: number;
-  remaining: number;
-  createdAt?: any;
-  updatedAt?: any;
+  paidAmount: number;
+  pendingAmount: number;
+  lastPaymentDate: string;
+  remarks: string;
 }
 
 export interface AuditLog {
-  id?: string;
-  collection: string;
-  recordId: string;
-  previousValue: any;
-  newValue: any;
-  timestamp: any;
+  id: string;
   userId: string;
   userName: string;
-  action: 'create' | 'update' | 'delete';
-}
-
-export interface Settings {
-  openingBalance: number;
-  lastClosingDate?: any;
+  action: string;
+  module: string;
+  timestamp: any;
+  details: string;
 }
