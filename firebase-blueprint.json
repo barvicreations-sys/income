@@ -1,0 +1,99 @@
+{
+  "entities": {
+    "users": {
+      "title": "User",
+      "description": "User account and role information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "staff", "user"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "salaries": {
+      "title": "Salary",
+      "description": "Employee salary payments",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "monthlySalary": { "type": "number" },
+        "paidAmount": { "type": "number" },
+        "remainingSalary": { "type": "number" },
+        "paymentDate": { "type": "string", "format": "date" },
+        "paymentMethod": { "type": "string" },
+        "remarks": { "type": "string" },
+        "month": { "type": "string" },
+        "year": { "type": "number" }
+      },
+      "required": ["employeeId", "employeeName", "monthlySalary", "paidAmount"]
+    },
+    "income": {
+      "title": "Income",
+      "description": "Business income records",
+      "type": "object",
+      "properties": {
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "paymentMethod": { "type": "string" },
+        "receivedFrom": { "type": "string" },
+        "remarks": { "type": "string" }
+      },
+      "required": ["amount", "category", "date"]
+    },
+    "expenses": {
+      "title": "Expense",
+      "description": "Business expense records",
+      "type": "object",
+      "properties": {
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "paymentMethod": { "type": "string" },
+        "paidTo": { "type": "string" },
+        "remarks": { "type": "string" }
+      },
+      "required": ["amount", "category", "date"]
+    },
+    "ohdar": {
+      "title": "Ohdar (Receivable)",
+      "description": "Receivable payments from clients",
+      "type": "object",
+      "properties": {
+        "clientName": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "receivedAmount": { "type": "number" },
+        "pendingAmount": { "type": "number" },
+        "lastPaymentDate": { "type": "string", "format": "date" },
+        "remarks": { "type": "string" }
+      },
+      "required": ["clientName", "totalAmount"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "users",
+      "description": "User profiles"
+    },
+    "/salaries/{salaryId}": {
+      "schema": "salaries",
+      "description": "Salary records"
+    },
+    "/income/{incomeId}": {
+      "schema": "income",
+      "description": "Income records"
+    },
+    "/expenses/{expenseId}": {
+      "schema": "expenses",
+      "description": "Expense records"
+    },
+    "/ohdar/{ohdarId}": {
+      "schema": "ohdar",
+      "description": "Receivable records"
+    }
+  }
+}
